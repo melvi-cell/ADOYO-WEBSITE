@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNMUTED Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-7xl mx-auto p-6">
+    
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">🔥 UNMUTED Admin Dashboard</h1>
+      <div class="flex gap-3">
+        <button onclick="showTrash()" id="trashBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition text-sm">
+          <i class="fas fa-trash-alt mr-2"></i> Trash (<span id="trashCount">0</span>)
+        </button>
+        <a href="index.html" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition text-sm">
+          <i class="fas fa-home mr-2"></i> Back to Site
+        </a>
+      </div>
+    </div>
+    
+    <!-- Login -->
+    <div id="loginSection" class="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto">
+      <div class="text-center mb-6">
+        <i class="fas fa-shield-alt text-5xl text-amber-600 mb-3"></i>
+        <h2 class="text-xl font-bold">Admin Login</h2>
+      </div>
+      <input type="password" id="adminPassword" placeholder="Enter Password" class="w-full p-3 border rounded-xl mb-4">
+      <button onclick="login()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold transition">
+        <i class="fas fa-key mr-2"></i> Login
+      </button>
+      <p class="text-xs text-gray-400 text-center mt-4">Default password: <strong>unmuted2026</strong></p>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboardSection" class="hidden">
+      
+      <!-- Stats -->
+      <div class="grid md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-amber-500">
+          <p class="text-gray-500 text-sm">Total Enrollments</p>
+          <p class="text-3xl font-bold" id="enrollmentCount">0</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-emerald-500">
+          <p class="text-gray-500 text-sm">Scholarship Apps</p>
+          <p class="text-3xl font-bold" id="scholarshipCount">0</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500">
+          <p class="text-gray-500 text-sm">Total Submissions</p>
+          <p class="text-3xl font-bold" id="totalCount">0</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-purple-500">
+          <p class="text-gray-500 text-sm">Last 7 Days</p>
+          <p class="text-3xl font-bold" id="weeklyCount">0</p>
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-4">
+        <button onclick="showTab('enrollments')" id="tabEnrollments" class="px-4 py-2 rounded-full bg-amber-600 text-white">📋 Enrollments</button>
+        <button onclick="showTab('scholarships')" id="tabScholarships" class="px-4 py-2 rounded-full bg-gray-300 text-gray-700">🎓 Scholarships</button>
+      </div>
+      
+      <!-- Enrollments Table -->
+      <div id="enrollmentsTab" class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Phone</th>
+                <th class="px-4 py-3 text-left">Program</th>
+                <th class="px-4 py-3 text-left">Date</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="enrollmentsTableBody">
+              <tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+            <!-- Scholarships Table -->
+      <div id="scholarshipsTab" class="bg-white rounded-xl shadow-sm overflow-hidden hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="px-4 py-3 text-left">Full Name</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Phone</th>
+                <th class="px-4 py-3 text-left">School</th>
+                <th class="px-4 py-3 text-left">Grade</th>
+                <th class="px-4 py-3 text-left">Date</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="scholarshipsTableBody">
+              <tr><td colspan="8" class="text-center py-8 text-gray-500">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+  
+  <!-- Trash Modal -->
+  <div id="trashModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden">
+      <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+        <h3 class="text-xl font-bold"><i class="fas fa-trash-alt mr-2"></i> Trash Bin</h3>
+        <button onclick="closeTrash()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
+      </div>
+      <div class="p-4 overflow-y-auto max-h-[calc(80vh-70px)]">
+        <div class="flex gap-2 mb-4">
+          <button onclick="filterTrash('all')" id="trashAllBtn" class="px-3 py-1 rounded-full bg-amber-600 text-white text-sm">All</button>
+          <button onclick="filterTrash('enrollment')" id="trashEnrollBtn" class="px-3 py-1 rounded-full bg-gray-300 text-gray-700 text-sm">Enrollments</button>
+          <button onclick="filterTrash('scholarship')" id="trashScholarBtn" class="px-3 py-1 rounded-full bg-gray-300 text-gray-700 text-sm">Scholarships</button>
+          <button onclick="emptyTrash()" class="ml-auto px-3 py-1 rounded-full bg-red-600 text-white text-sm hover:bg-red-700">
+            <i class="fas fa-trash-alt mr-1"></i> Empty Trash
+          </button>
+        </div>
+        <div id="trashList" class="space-y-2">
+          <p class="text-center text-gray-500 py-8">Trash is empty</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhHV7VrKK5ZcoFUEXvSVQDpkTiMvN4jVk",
+      authDomain: "unmuted-debate.firebaseapp.com",
+      projectId: "unmuted-debate",
+      storageBucket: "unmuted-debate.firebasestorage.app",
+      messagingSenderId: "351095685082",
+      appId: "1:351095685082:web:e128a5dbe08f8929978ae3",
+      measurementId: "G-6Q5S6YRKV3"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const ADMIN_PASSWORD = "unmuted2026";
+    
+    let currentTrashFilter = 'all';
+    
+    async function login() {
+      const pwd = document.getElementById('adminPassword').value;
+      if (pwd === ADMIN_PASSWORD) {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        loadAllData();
+      } else {
+        alert('Wrong password!');
+      }
+    }
+    
+    async function loadAllData() {
+      await loadEnrollments();
+      await loadScholarships();
+      await loadStats();
+    }
+    
+    // Move to Trash
+    async function moveToTrash(collection, docId, itemName) {
+      if (confirm(`Move "${itemName}" to trash?`)) {
+        const docRef = db.collection(collection).doc(docId);
+        const doc = await docRef.get();
+        
+        // Save to trash collection
+        await db.collection('trash').add({
+          originalCollection: collection,
+          originalId: docId,
+          data: doc.data(),
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          deletedAtString: new Date().toISOString(),
+          itemName: itemName
+        });
+        
+        // Delete from original collection
+        await docRef.delete();
+        
+        // Refresh
+        await loadAllData();
+        await updateTrashCount();
+        if (document.getElementById('trashModal').classList.contains('flex')) {
+          loadTrashItems();
+        }
+        alert(`"${itemName}" moved to trash`);
+      }
+    }
+    
+    // Restore from Trash
+    async function restoreFromTrash(trashId, originalCollection, originalId, data) {
+      if (confirm(`Restore "${data.name || data.fullName || 'this item'}"?`)) {
+        // Add back to original collection
+        await db.collection(originalCollection).doc(originalId).set(data);
+        // Delete from trash
+        await db.collection('trash').doc(trashId).delete();
+        
+        await loadAllData();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Item restored successfully');
+      }
+    }
+    
+    // Permanently delete from trash
+    async function permanentDelete(trashId, itemName) {
+      if (confirm(`Permanently delete "${itemName}"? This action cannot be undone.`)) {
+        await db.collection('trash').doc(trashId).delete();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Item permanently deleted');
+      }
+    }
+    
+    // Empty entire trash
+    async function emptyTrash() {
+      if (confirm('⚠️ PERMANENT ACTION: Delete ALL items in trash? This cannot be undone!')) {
+        const snapshot = await db.collection('trash').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Trash emptied successfully');
+      }
+    }
+    
+    // Load trash items
+    async function loadTrashItems() {
+      let query = db.collection('trash').orderBy('deletedAt', 'desc');
+      const snapshot = await query.get();
+      const container = document.getElementById('trashList');
+      
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">Trash is empty</p>';
+        return;
+      }
+      
+      let items = [];
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        items.push({ id: doc.id, ...data });
+      });
+      
+      // Filter
+      if (currentTrashFilter !== 'all') {
+        items = items.filter(item => item.originalCollection === currentTrashFilter + 's');
+      }
+      
+      if (items.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">No items in this filter</p>';
+        return;
+      }
+      
+      container.innerHTML = items.map(item => {
+        const itemName = item.data?.name || item.data?.fullName || 'Unknown';
+        const itemEmail = item.data?.email || 'No email';
+        const type = item.originalCollection === 'enrollments' ? '📋 Enrollment' : '🎓 Scholarship';
+        const deletedDate = item.deletedAtString?.slice(0, 10) || 'Unknown date';
+        
+        return `
+          <div class="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
+            <div>
+              <p class="font-semibold">${itemName}</p>
+              <p class="text-xs text-gray-500">${itemEmail} • ${type} • Deleted: ${deletedDate}</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="restoreFromTrash('${item.id}', '${item.originalCollection}', '${item.originalId}', ${JSON.stringify(item.data).replace(/"/g, '&quot;')})" 
+                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
+                <i class="fas fa-undo"></i> Restore
+              </button>
+              <button onclick="permanentDelete('${item.id}', '${itemName}')" 
+                      class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+                <i class="fas fa-trash-alt"></i> Delete Forever
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function filterTrash(filter) {
+      currentTrashFilter = filter;
+      
+      // Update button styles
+      document.getElementById('trashAllBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'all' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      document.getElementById('trashEnrollBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'enrollment' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      document.getElementById('trashScholarBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'scholarship' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      
+      loadTrashItems();
+    }
+    
+    async function updateTrashCount() {
+      const snapshot = await db.collection('trash').get();
+      document.getElementById('trashCount').innerText = snapshot.size;
+    }
+    
+    function showTrash() {
+      document.getElementById('trashModal').classList.remove('hidden');
+      document.getElementById('trashModal').classList.add('flex');
+      loadTrashItems();
+    }
+    
+    function closeTrash() {
+      document.getElementById('trashModal').classList.add('hidden');
+      document.getElementById('trashModal').classList.remove('flex');
+    }
+    
+    async function loadEnrollments() {
+      const snapshot = await db.collection('enrollments').orderBy('timestamp', 'desc').get();
+      const tbody = document.getElementById('enrollmentsTableBody');
+      
+      if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No enrollments yet</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const itemName = data.name || data.fullName || 'Unknown';
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">${data.name || data.fullName || '-'}</td>
+            <td class="px-4 py-3">${data.email || '-'}</td>
+            <td class="px-4 py-3">${data.phone || '-'}</td>
+            <td class="px-4 py-3">${data.program || '-'}</td>
+            <td class="px-4 py-3 text-xs">${data.dateSubmitted?.slice(0,10) || '-'}</td>
+            <td class="px-4 py-3"><span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">${data.status || 'New'}</span></td>
+            <td class="px-4 py-3 text-center">
+              <button onclick="moveToTrash('enrollments', '${doc.id}', '${itemName}')" 
+                      class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
+                <i class="fas fa-trash-alt"></i> Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+        async function loadScholarships() {
+      const snapshot = await db.collection('scholarships').orderBy('timestamp', 'desc').get();
+      const tbody = document.getElementById('scholarshipsTableBody');
+      
+      if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No scholarship applications yet</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const itemName = data.fullName || data.name || 'Unknown';
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">${data.fullName || '-'}</td>
+            <td class="px-4 py-3">${data.email || '-'}</td>
+            <td class="px-4 py-3">${data.phone || '-'}</td>
+            <td class="px-4 py-3">${data.school || '-'}</td>
+            <td class="px-4 py-3">${data.grade || '-'}</td>
+            <td class="px-4 py-3 text-xs">${data.dateSubmitted?.slice(0,10) || '-'}</td>
+            <td class="px-4 py-3"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${data.status || 'Pending'}</span></td>
+            <td class="px-4 py-3 text-center">
+              <button onclick="moveToTrash('scholarships', '${doc.id}', '${itemName}')" 
+                      class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
+                <i class="fas fa-trash-alt"></i> Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    async function loadStats() {
+      const enrollSnapshot = await db.collection('enrollments').get();
+      const scholarSnapshot = await db.collection('scholarships').get();
+      
+      document.getElementById('enrollmentCount').innerText = enrollSnapshot.size;
+      document.getElementById('scholarshipCount').innerText = scholarSnapshot.size;
+      document.getElementById('totalCount').innerText = enrollSnapshot.size + scholarSnapshot.size;
+      
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      
+      let weekly = 0;
+      enrollSnapshot.docs.forEach(doc => {
+        if (doc.data().dateSubmitted && new Date(doc.data().dateSubmitted) > weekAgo) weekly++;
+      });
+      scholarSnapshot.docs.forEach(doc => {
+        if (doc.data().dateSubmitted && new Date(doc.data().dateSubmitted) > weekAgo) weekly++;
+      });
+      document.getElementById('weeklyCount').innerText = weekly;
+    }
+    
+    function showTab(tab) {
+      const enrollTab = document.getElementById('enrollmentsTab');
+      const scholarTab = document.getElementById('scholarshipsTab');
+      const btnEnroll = document.getElementById('tabEnrollments');
+      const btnScholar = document.getElementById('tabScholarships');
+      
+      if (tab === 'enrollments') {
+        enrollTab.classList.remove('hidden');
+        scholarTab.classList.add('hidden');
+        btnEnroll.classList.add('bg-amber-600', 'text-white');
+        btnEnroll.classList.remove('bg-gray-300', 'text-gray-700');
+        btnScholar.classList.add('bg-gray-300', 'text-gray-700');
+        btnScholar.classList.remove('bg-amber-600', 'text-white');
+      } else {
+        enrollTab.classList.add('hidden');
+        scholarTab.classList.remove('hidden');
+        btnScholar.classList.add('bg-amber-600', 'text-white');
+        btnScholar.classList.remove('bg-gray-300', 'text-gray-700');
+        btnEnroll.classList.add('bg-gray-300', 'text-gray-700');
+        btnEnroll.classList.remove('bg-amber-600', 'text-white');
+      }
+    }
+  </script>
+</body>
+</html>
